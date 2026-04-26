@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Новостной портал{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">📰 Последние новости</h1>
+
+{% if news_list %}
+    <div class="row">
+        {% for news in news_list %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 {% if news.is_today %}news-today{% endif %}">
+                    <div class="card-body">
+                        <span class="badge bg-secondary">ID: {{ news.id }}</span>
+                        <span class="text-muted small ms-2">📅 {{ news.date }}</span>
+                        {% if news.is_today %}
+                            <span class="badge bg-success ms-1">Сегодня!</span>
+                        {% endif %}
+
+                        <h5 class="card-title mt-2">
+                            <a href="{% url 'news_detail' news.id %}" class="text-decoration-none">
+                                {{ news.title }}
+                            </a>
+                        </h5>
+                        <p class="card-text">{{ news.summary|truncatewords:20 }}</p>
+                        <a href="{% url 'news_detail' news.id %}" class="btn btn-primary btn-sm">Читать →</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info text-center">
+        <h4>📭 Новостей пока нет</h4>
+        <a href="{% url 'add_news' %}" class="btn btn-primary">➕ Добавить новость</a>
+    </div>
+{% endif %}
+{% endblock %}

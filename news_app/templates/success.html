@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Успех!{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto text-center">
+        <div class="alert alert-success">
+            <h1>✅ {{ page_title }}</h1>
+            <p>{{ message }}</p>
+            <a href="{% url 'home' %}" class="btn btn-primary">На главную</a>
+            <a href="{% url 'add_news' %}" class="btn btn-success">Добавить еще</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
