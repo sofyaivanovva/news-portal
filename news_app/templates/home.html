@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Новости{% endblock %}
+
+{% block content %}
+<h1>Все новости</h1>
+
+<div class="news-list">
+    {% for news in page_obj %}
+        <article class="news-card">
+            <h2><a href="{% url 'news_detail' news.pk %}">{{ news.title }}</a></h2>
+            <div class="news-meta">
+                <span>👤 Автор: {{ news.author.get_full_name|default:news.author.username }}</span>
+                <span>📅 {{ news.date_created|date:"d.m.Y H:i" }}</span>
+                {% if user.is_authenticated and news.author == user %}
+                    <span class="your-news-badge">Ваша новость</span>
+                {% endif %}
+            </div>
+            <p class="news-summary">{{ news.summary }}</p>
+            <a href="{% url 'news_detail' news.pk %}" class="btn-read">Читать далее →</a>
+        </article>
+    {% empty %}
+        <p>Новостей пока нет. Будьте первым, кто добавит новость!</p>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; Первая</a>
+            <a href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+        {% endif %}
+
+        <span class="current">
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Следующая</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">Последняя &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+{% endblock %}

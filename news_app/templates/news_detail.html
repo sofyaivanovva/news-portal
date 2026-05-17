@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ news.title }}{% endblock %}
+
+{% block content %}
+<article class="news-detail">
+    <h1>{{ news.title }}</h1>
+
+    <div class="news-meta">
+        <p>👤 Автор: {{ news.author.get_full_name|default:news.author.username }}</p>
+        <p>📅 Создано: {{ news.date_created|date:"d.m.Y H:i" }}</p>
+        {% if news.date_updated != news.date_created %}
+            <p>✏️ Обновлено: {{ news.date_updated|date:"d.m.Y H:i" }}</p>
+        {% endif %}
+        {% if is_author %}
+            <div class="action-buttons">
+                <a href="{% url 'news_edit' news.pk %}" class="btn-edit">✏️ Редактировать</a>
+                <a href="{% url 'news_delete' news.pk %}" class="btn-delete" onclick="return confirm('Вы уверены?')">🗑️ Удалить</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="news-content">
+        <p class="news-summary-full"><strong>{{ news.summary }}</strong></p>
+        <div class="news-full-content">
+            {{ news.content|linebreaks }}
+        </div>
+    </div>
+
+    <div class="back-link">
+        <a href="{% url 'home' %}">← Назад к списку новостей</a>
+    </div>
+</article>
+{% endblock %}
