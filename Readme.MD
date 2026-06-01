@@ -1,3 +1,4 @@
+```markdown
 # Новостной портал (Django)
 
 ## Здравствуйте, Александр Евгеньевич!
@@ -18,3 +19,6 @@
 
 🧪 **Пример клиента:**  
 👉 https://github.com/sofyaivanovva/news-portal/tree/main/api_client
+
+```
+
