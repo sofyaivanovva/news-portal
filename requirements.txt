@@ -1,0 +1,7 @@
+Django>=4.2
+djangorestframework>=3.14
+django-filter>=23.0
+gunicorn>=21.0
+dj-database-url>=2.1
+whitenoise>=6.5
+requests>=2.28

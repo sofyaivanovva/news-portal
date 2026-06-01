@@ -1,123 +1,146 @@
-import json
-import os
-from datetime import date
-from django.shortcuts import render, redirect
-from django.http import Http404
-from .forms import NewsForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.http import HttpResponseForbidden
+from .forms import RegisterForm, UserUpdateForm, NewsForm
+from .models import News
 
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), 'data', 'news.json')
-
-
-def ensure_data_file_exists():
-    data_dir = os.path.dirname(DATA_FILE)
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
-
-    if not os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump([], f, ensure_ascii=False, indent=2)
-
-
-def load_news():
-    ensure_data_file_exists()
-    try:
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            news_list = json.load(f)
-            news_list.sort(key=lambda x: x.get('date', ''), reverse=True)
-            return news_list
-    except (json.JSONDecodeError, FileNotFoundError):
-        return []
-
-
-def save_news(news_list):
-    ensure_data_file_exists()
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(news_list, f, ensure_ascii=False, indent=2)
-
-
-def get_next_id(news_list):
-    if not news_list:
-        return 1
-    max_id = max(news.get('id', 0) for news in news_list)
-    return max_id + 1
-
-
-def home_view(request):
-    news_list = load_news()
-    today = date.today().isoformat()
-
-    for news in news_list:
-        news['is_today'] = (news.get('date') == today)
-
-    context = {
-        'news_list': news_list,
-        'page_title': 'Главная страница',
-    }
-    return render(request, 'home.html', context)
-
-
-def news_detail_view(request, news_id):
-    news_list = load_news()
-
-    news_item = None
-    for news in news_list:
-        if news.get('id') == news_id:
-            news_item = news
-            break
-
-    if news_item is None:
-        raise Http404(f"Новость с ID {news_id} не найдена")
-
-    context = {
-        'news': news_item,
-        'page_title': news_item.get('title', 'Новость'),
-    }
-    return render(request, 'news_detail.html', context)
-
-
-def add_news_view(request):
-
+def register_view(request):
     if request.method == 'POST':
-        form = NewsForm(request.POST)
-
+        form = RegisterForm(request.POST)
         if form.is_valid():
-            title = form.cleaned_data['title']
-            summary = form.cleaned_data['summary']
-            content = form.cleaned_data['content']
-
-            news_date = form.cleaned_data['date']
-            if not news_date:
-                news_date = date.today()
-
-            news_list = load_news()
-            new_id = get_next_id(news_list)
-
-            new_news = {
-                'id': new_id,
-                'title': title,
-                'summary': summary,
-                'content': content,
-                'date': news_date.isoformat() if hasattr(news_date, 'isoformat') else str(news_date)
-            }
-
-            news_list.append(new_news)
-            save_news(news_list)
-
-            return redirect('success')
+            user = form.save()
+            login(request, user)
+            messages.success(request, f'Добро пожаловать, {user.username}! Регистрация прошла успешно.')
+            return redirect('home')
+        else:
+            for error in form.errors.values():
+                messages.error(request, error)
     else:
-        form = NewsForm()
+        form = RegisterForm()
+    return render(request, 'register.html', {'form': form})
+
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f'С возвращением, {user.username}!')
+            return redirect('home')
+        else:
+            messages.error(request, 'Неверное имя пользователя или пароль.')
+    return render(request, 'login.html')
+
+
+def logout_view(request):
+    logout(request)
+    messages.info(request, 'Вы вышли из системы.')
+    return redirect('home')
+
+
+@login_required
+def profile_view(request):
+    if request.method == 'POST':
+        form = UserUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Ваш профиль был обновлен!')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+    else:
+        form = UserUpdateForm(instance=request.user)
 
     context = {
         'form': form,
-        'page_title': 'Добавить новость',
+        'user_news_count': News.objects.filter(author=request.user).count()
     }
-    return render(request, 'add_news.html', context)
+    return render(request, 'profile.html', context)
 
 
-def success_view(request):
-    context = {
-        'page_title': 'Новость добавлена',
-        'message': 'Ваша новость успешно опубликована!'
-    }
-    return render(request, 'success.html', context)
+@login_required
+def profile_delete_view(request):
+    if request.method == 'POST':
+        user = request.user
+        logout(request)
+        user.delete()
+        messages.success(request, 'Ваш аккаунт был успешно удален.')
+        return redirect('home')
+    return render(request, 'profile_confirm_delete.html')
+
+
+def home_view(request):
+    news_list = News.objects.all()
+    paginator = Paginator(news_list, 5)  # 5 news per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'home.html', {'page_obj': page_obj})
+
+
+def news_detail_view(request, pk):
+    news = get_object_or_404(News, pk=pk)
+    is_author = False
+    if request.user.is_authenticated:
+        is_author = (news.author == request.user)
+    return render(request, 'news_detail.html', {'news': news, 'is_author': is_author})
+
+
+@login_required
+def news_create_view(request):
+    if request.method == 'POST':
+        form = NewsForm(request.POST)
+        if form.is_valid():
+            news = form.save(commit=False)
+            news.author = request.user
+            news.save()
+            messages.success(request, 'Новость успешно создана!')
+            return redirect('news_detail', pk=news.pk)
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+    else:
+        form = NewsForm()
+    return render(request, 'news_form.html', {'form': form, 'title': 'Создать новость'})
+
+
+@login_required
+def news_edit_view(request, pk):
+    news = get_object_or_404(News, pk=pk)
+
+    # Check if user is the author
+    if news.author != request.user:
+        return HttpResponseForbidden("Вы не можете редактировать эту новость")
+
+    if request.method == 'POST':
+        form = NewsForm(request.POST, instance=news)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Новость успешно обновлена!')
+            return redirect('news_detail', pk=news.pk)
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+    else:
+        form = NewsForm(instance=news)
+
+    return render(request, 'news_form.html', {'form': form, 'title': 'Редактировать новость'})
+
+
+@login_required
+def news_delete_view(request, pk):
+    news = get_object_or_404(News, pk=pk)
+
+    # Check if user is the author
+    if news.author != request.user:
+        return HttpResponseForbidden("Вы не можете удалить эту новость")
+
+    if request.method == 'POST':
+        news.delete()
+        messages.success(request, 'Новость успешно удалена!')
+        return redirect('home')
+
+    return render(request, 'news_confirm_delete.html', {'news': news})  # ИСПРАВЛЕНО: news вместо news_123

@@ -1,3 +1,9 @@
 from django.contrib import admin
+from .models import News
 
-# Register your models here.
+@admin.register(News)
+class NewsAdmin(admin.ModelAdmin):
+    list_display = ['title', 'author', 'date_created', 'date_updated']
+    list_filter = ['author', 'date_created']
+    search_fields = ['title', 'content']
+    readonly_fields = ['date_created', 'date_updated']

@@ -1,59 +1,62 @@
 from django import forms
-from django.core.exceptions import ValidationError
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.models import User
+from .models import News
 
 
-class NewsForm(forms.Form):
-    title = forms.CharField(
-        max_length=100,
-        label="Заголовок",
-        widget=forms.TextInput(attrs={
-            'class': 'form-control',
-            'placeholder': 'Введите заголовок новости'
-        })
-    )
+class RegisterForm(UserCreationForm):
+    email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
-    summary = forms.CharField(
-        max_length=200,
-        label="Краткое описание",
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 3,
-            'placeholder': 'Краткое описание новости'
-        })
-    )
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
 
-    content = forms.CharField(
-        label="Текст новости",
-        widget=forms.Textarea(attrs={
-            'class': 'form-control',
-            'rows': 8,
-            'placeholder': 'Полный текст новости'
-        })
-    )
+    def __init__(self, *args, **kwargs):
+        super(RegisterForm, self).__init__(*args, **kwargs)
+        for field_name in ['username', 'password1', 'password2']:
+            self.fields[field_name].widget.attrs['class'] = 'form-control'
 
-    date = forms.DateField(
-        label="Дата публикации",
-        required=False,
-        widget=forms.DateInput(attrs={
-            'class': 'form-control',
-            'type': 'date'
-        })
-    )
+
+class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        super(UserUpdateForm, self).__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs['class'] = 'form-control'
+
+
+class NewsForm(forms.ModelForm):
+    class Meta:
+        model = News
+        fields = ['title', 'summary', 'content']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Введите заголовок'}),
+            'summary': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Краткое описание'}),
+            'content': forms.Textarea(attrs={'rows': 10, 'class': 'form-control', 'placeholder': 'Полное содержание'}),
+        }
 
     def clean_title(self):
         title = self.cleaned_data.get('title')
-        if len(title) < 3:
-            raise ValidationError('Заголовок должен содержать минимум 3 символа')
+        if len(title) < 5:
+            raise forms.ValidationError('Заголовок должен содержать минимум 5 символов')
         return title
 
     def clean_summary(self):
         summary = self.cleaned_data.get('summary')
-        if len(summary) < 5:
-            raise ValidationError('Краткое описание должно содержать минимум 5 символов')
+        if len(summary) < 10:
+            raise forms.ValidationError('Краткое описание должно содержать минимум 10 символов')
         return summary
 
     def clean_content(self):
         content = self.cleaned_data.get('content')
-        if len(content) < 10:
-            raise ValidationError('Текст новости должен содержать минимум 10 символов')
+        if len(content) < 20:
+            raise forms.ValidationError('Содержание должно содержать минимум 20 символов')
         return content

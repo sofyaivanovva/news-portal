@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Профиль пользователя{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <h1>Профиль пользователя</h1>
+
+    <div class="profile-info">
+        <h3>Статистика</h3>
+        <p>Всего новостей: {{ user_news_count }}</p>
+        <p>Дата регистрации: {{ user.date_joined|date:"d.m.Y" }}</p>
+        <p>Последний вход: {{ user.last_login|date:"d.m.Y H:i" }}</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Имя пользователя:</label>
+            {{ form.username }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.first_name.id_for_label }}">Имя:</label>
+            {{ form.first_name }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.last_name.id_for_label }}">Фамилия:</label>
+            {{ form.last_name }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.email.id_for_label }}">Email:</label>
+            {{ form.email }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-submit">Обновить профиль</button>
+            <a href="{% url 'profile_delete' %}" class="btn-delete-profile">Удалить аккаунт</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
