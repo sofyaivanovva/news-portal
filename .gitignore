@@ -1,29 +1,100 @@
-# Python
+# --- Python ---
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-.venv/
-ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+cython_debug/
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+cover/
 
-# Django
+# --- Virtual environments ---
+.env/
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# --- Django ---
+*.log
+local_settings.py
 db.sqlite3
+db.sqlite3-journal
 *.sqlite3
 staticfiles/
 media/
+*.pot
 
-# IDE
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+secrets.json
+
+# --- IDE & editors ---
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Cursor (local agent state — not for the repo)
+.cursor/
+
+# --- OS ---
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
 
-# Environment
-.env
-.env.local
-
-# Logs
-*.log
+# --- Deploy / misc ---
+*.bak
+*.tmp
+*.orig
+node_modules/
